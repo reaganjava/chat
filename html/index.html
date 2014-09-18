@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>chat</title>
+    <script src="/socket.io/socket.io.js" type="text/javascript"></script>
+    <script src="./protocol.js" type="text/javascript"></script>
+    <script src="./jquery-1.8.0.js"></script>
+    <script src="./jquery-1.8.0.min.js"></script>
+    <script src="../jquery.alerts.js"></script>
+    <link href="../jquery.alerts.css" rel="stylesheet" type="text/css" media="screen" />
+    <script type="text/javascript">
+        var isLogin = false;
+        var sessionId = '';
+        var nickname = '';
+        var socket = null;
+        $(document).ready(function() {
+            socket = io.connect();
+            socket.on('connect', function() {
+                jPrompt('输入用户名', '', '登录聊天', function(nickname) {
+                    var auth = new VAuth();
+                    auth.code = 10000;
+                    auth.version = '1.0';
+                    auth.dateline = new Date().getTime();
+                    auth.nickname = nickname;
+                    auth.userId = 1;
+                    login(auth);
+                });
+            });
+
+            socket.on('message', function(jsonData) {
+                var protocol = new VProtocol();
+                protocol = protocol.vdecoder(jsonData);
+                switch(protocol.code) {
+                    case 10000: {
+                        var status = new VStatus();
+                        status = status.vdecoder(jsonData);
+                        if(status.error == 0) {
+                            loginSuccess(status);
+                        } else {
+                            alert(status.errorMsg);
+                        }
+                        break;
+                    }
+                    case 10001: {
+                        var onlines = new VOnlines();
+                        onlines = onlines.vdecoder(jsonData);
+                        refreshList(onlines.onlinesMemberList);
+                        break;
+                    }
+                    case 10003: {
+                        var msg = new VMsg();
+                        msg = msg.vdecoder(jsonData);
+                        refreshMessage(msg);
+                        break;
+                    }
+                    case 10004: {
+                        break;
+                    }
+                }
+            })
+
+            $('#msgList').val('');
+        });
+        function login(auth) {
+            socket.send(auth.vencoder(auth));
+        }
+        function loginSuccess(status) {
+            isLogin = true;
+            sessionId = status.sessionId;
+            nickname = status.nickname;
+            getOnlinesList();
+            keepAlive();
+        }
+        function keepAlive() {
+            setInterval(function(){
+                var keepAlive = new VKeepAlive()
+                keepAlive.code = 10004;
+                keepAlive.version = '1.0';
+                keepAlive.dateline = new Date().getTime();
+                socket.send(keepAlive.vencoder(keepAlive));
+            }, 1000);
+        }
+        function getOnlinesList() {
+            var protocol = new VProtocol();
+            protocol.code = 10001;
+            socket.send(protocol.vencoder(protocol));
+        }
+        function refreshList(memberArray) {
+            $('#onlines').empty();
+            for(var i = 0; i < memberArray.length; i++) {
+                $('#onlines').append('<option value=' + memberArray[i].sessionId + '>' + memberArray[i].nickname + '<//option>');
+            }
+        }
+        function disconnect() {
+            if(sessionId != '') {
+                var exit = new VExit();
+                exit.code = 10002
+                exit.sessionId = sessionId;
+                socket.send(exit.encoder(exit));
+                socket.disconnect();
+            }
+        }
+        function refreshMessage(msg) {
+            var msgListContent = $('#msgList').val();
+            var sessionId = msg.sessionId;
+            var nickname = msg.nickname;
+            //$("#onlines option[value=' + sessionId + ']").attr("selected", true);
+           var content =  '<a href="#" onClick="clickOnline(\'' + sessionId + '\')">' + nickname + '</a>对你说：' + msg.content;
+            msgListContent += (content + '<br/>');
+            $('#msgList').append(msgListContent);
+        }
+        function clickOnline(sessionId){
+            $('#onlines').find('option[value='+ sessionId +']').attr('selected', true);
+        }
+        function sendMessage() {
+            if(isLogin) {
+                var sendMsg = $('#dialog').val();
+                $('#msgList').append('你说：' + sendMsg + '<br/>');
+                $('#dialog').val('');
+                var msg = new VMsg();
+                msg.code = 10003;
+                msg.version = '1.0';
+                msg.sessionId = sessionId;
+                msg.nickname = nickname;
+                //获取列表选中的用户
+                msg.reviceSessionId = $('#onlines').val();
+                msg.msgType = 1;
+                msg.content = sendMsg;
+                socket.send(msg.vencoder(msg));
+            }
+        }
+    </script>
+</head>
+<body>
+<button id='disconnect'>disconnect</button><br/>
+<div style="float:left">
+<div style="color:black;width:1024px;height:300px;border-style:solid;" id="msgList"></div>
+</div>
+<div style="float:left">
+    <select id="onlines" style="width:130px" SIZE="20">
+    </select>
+</div>
+<a href="./sendPhoto" target="_blank">上传图片</a>
+<textarea rows="5" cols="140" id="dialog"></textarea><button id="send" onclick="sendMessage()">send</button>
+</body>
+</html>
