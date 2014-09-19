@@ -95,12 +95,18 @@ function disconnect() {
     }
 }
 function refreshMessage(msg) {
-    alert(msg.sessionId);
-    alert(msg.reviceSessionId);
     var msgListContent = $('#msgList').val();
+    var viewContent = '';
+    alert(msg.attachment);
+    if(msg.attachment != '') {
+        viewContent += '<a href=' + msg.attachment + ' target="new"><img src=' + msg.attachment + ' width="120" height="64" /></a></br>';
+        viewContent += msg.content;
+    } else {
+        viewContent += msg.content;
+    }
     //$("#onlines option[value=' + sessionId + ']").attr("selected", true);
     var chatContentDiv = '<div class="message clearfix"><div class="user-logo"><img src="./img/default.png">'
-        + '</div><div class="wrap-text"><h5 class="clearfix">' + msg.nickname + '</h5><div>' + msg.content + '</div></div><div class="wrap-ri"><div clsss="clearfix">'
+        + '</div><div class="wrap-text"><h5 class="clearfix">' + msg.nickname + '</h5><div>' + viewContent + '</div></div><div class="wrap-ri"><div clsss="clearfix">'
         + '<span>' + msg.dateline + '</span></div></div><div style="clear:both;"></div></div>'
     $('#msgList').append(chatContentDiv);
 }
