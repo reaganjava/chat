@@ -93,9 +93,13 @@ function Service() {
         var onlines = new Onlines();
         onlines.code = 10001;
         onlines.onlinesMemberList = member.getOnlineMemberInfoList();
+        var currentOnlineNumber = onlines.onlinesMemberList.length;
+        //console.log('online number:' + currentOnlineNumber);
         var sockets = member.getOnlineMemberSocketList();
-        for(var i = 0; i < sockets.length; i++) {
-            sockets[i].send(this.encoder(onlines));
+        if(sockets != null) {
+            for (var i = 0; i < sockets.length; i++) {
+                sockets[i].send(this.encoder(onlines));
+            }
         }
     }
 

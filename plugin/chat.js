@@ -61,7 +61,7 @@ function loginSuccess(status) {
     isLogin = true;
     sessionId = status.sessionId;
     nickname = status.nickname;
-    getOnlinesList();
+    //getOnlinesList();
     keepAlive();
 }
 function keepAlive() {

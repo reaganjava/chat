@@ -58,12 +58,13 @@ function VKeepAlive() {
 }
 VKeepAlive.prototype = new VProtocol();
 
-
+//用户在线列表
 function VOnlines() {
     this.onlinesMemberList;
 }
 VOnlines.prototype = new VProtocol();
 
+//退出聊天
 function VExit() {
     this.sessionId;
 }
