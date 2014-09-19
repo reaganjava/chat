@@ -6,7 +6,7 @@ var fs = require('fs');
 var io = require('socket.io');
 var path = require('path');
 var express = require('express');
-var bodyParser = require('body-parser');
+//var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
 var Service = require("./handler/service");
@@ -21,18 +21,22 @@ var app = express();
 
 app.use(cookieParser());
 app.use(session({secret: '123456'}));
+//设置静态目录
 app.use(express.static(path.join(__dirname, 'plugin')));
 app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.static(path.join(__dirname, 'css')));
 app.use(express.static(path.join(__dirname, 'resource')));
 app.use('/img', express.static(path.join(__dirname, 'img')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
+//设置页面模板
 app.set('view engine', 'ejs');
+//处理HTML
 app.engine('html', require('ejs').renderFile);
+//创建服务器
 var server = http.createServer(app);
 var sessionId = '';
-app.get('/index', function(req, res) {
-    res.render('index2.html');
+app.get('/', function(req, res) {
+    res.render('index.html');
 });
 
 app.get('/file', function(req, res) {
@@ -59,12 +63,16 @@ app.post('/send', function(req, res) {
 })
 
 
-
+//监听端口
 server.listen(1337);
 var socket = io.listen(server);
+//创建业务类
 var service = new Service();
+//监听SOCKET.IO
 socket.on('connection', function(socket) {
+    //接收到事件
     socket.on('message', function(jsonData) {
+        //解析协议
         var protocol = service.decoder(jsonData);
         switch(protocol.code) {
             //验证用户
@@ -74,27 +82,32 @@ socket.on('connection', function(socket) {
                 service.authClient(protocol, socket);
                 break;
             }
-            //获取用户列表
+           /* //获取用户列表
             case 10001: {
                 service.broadcastOnlineMemberList(sessionId);
                 break;
-            }
+            }*/
+            //用户退出
             case 10002: {
                 service.logOut(protocol);
                 break;
             }
+            //用户对话
             case 10003: {
                 service.dialog(protocol);
                 //socket.broadcast.send(msg.content);
                 break;
             }
+            //心跳检测
             case 10004: {
                 service.keepAlive(sessionId);
+                service.broadcastOnlineMemberList();
                 break;
             }
 
         }
     })
+    //断开连接监听
     socket.on('disconnect', function() {
         console.log("client disconnect:" + sessionId);
     })
