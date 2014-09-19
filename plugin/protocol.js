@@ -37,6 +37,7 @@ function VMsg() {
     this.sessionId;
     this.nickname;
     this.reviceSessionId;
+    //1.文本 2.带附件
     this.msgType;
     this.attachment;
     this.content;

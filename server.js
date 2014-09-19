@@ -22,18 +22,23 @@ var app = express();
 app.use(cookieParser());
 app.use(session({secret: '123456'}));
 app.use(express.static(path.join(__dirname, 'plugin')));
-app.use(express.static(path.join(__dirname, 'html')));
+app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.static(path.join(__dirname, 'css')));
 app.use(express.static(path.join(__dirname, 'resource')));
+app.use('/img', express.static(path.join(__dirname, 'img')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+app.set('view engine', 'ejs');
+app.engine('html', require('ejs').renderFile);
 var server = http.createServer(app);
 var sessionId = '';
-app.get('/', function(req, res) {
-    res.sendfile(__dirname + '/html/index.html');
+app.get('/index', function(req, res) {
+    res.render('index2.html');
 });
-app.get('/sendPhoto', function(req, res) {
-    console.log("photo");
-    res.sendfile(__dirname + '/html/upload.html');
-});
+
+app.get('/file', function(req, res) {
+    res.render('file.html', {thumbnail:''});
+})
+
 app.post('/send', function(req, res) {
     var form = new formidable.IncomingForm();   //创建上传表单
     form.encoding = 'utf-8';        //设置编辑
@@ -49,8 +54,8 @@ app.post('/send', function(req, res) {
         var thumbnailPath = form.uploadDir + '/' + filename;
        // console.log(files.thumbnail);
         fs.renameSync(files.thumbnail.path, thumbnailPath);
+        res.render('file.html', {thumbnail:filename});
     });
-    res.sendfile(__dirname + '/html/upload.html');
 })
 
 
@@ -66,7 +71,6 @@ socket.on('connection', function(socket) {
             case 10000: {
                 sessionId = service.uuid();
                 protocol.sessionId = sessionId;
-                console.log(protocol.sessionId);
                 service.authClient(protocol, socket);
                 break;
             }

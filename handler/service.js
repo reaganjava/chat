@@ -105,6 +105,7 @@ function Service() {
         var reviceId = msg.reviceSessionId;
         var content = msg.content;
         var memberInfo = member.getDetail(reviceId);
+        console.log(reviceId + ":" + memberInfo.sessionId);
         if(memberInfo != null) {
             memberInfo.socket.send(this.encoder(msg));
         } else {
